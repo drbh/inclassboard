@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<html>
+<head>
+  <link href="https://fonts.googleapis.com/css?family=Rubik&display=swap" rel="stylesheet"> 
+  <style>
+  .chatbar {
+    position: absolute;
+    right: 0;
+    width: 30vw;
+    background-color: #3e3e3e;
+    height: 82vh;
+    /*min-height: 600px;*/
+    top: 0;
+    padding: 20px;
+  }
+  .chatbar-background {
+    position: absolute;
+    right: 0;
+    width: 30vw;
+    background-color: #222;
+    height: 100vh;
+    z-index: -1;
+    top: 0;
+    padding: 20px;
+  }
+
+  body{
+    height: 100vh;
+    width: 100vh;
+    overflow: hidden;
+    font-family: 'Rubik', sans-serif;
+
+    background-color: #353535;
+    color: white;
+  }
+
+  .left-pane{
+    padding: 50px;
+  }
+
+
+  #send{
+    margin-left: 10px;
+    width: 100%;
+    padding: 8px;
+    border-radius: 25px;
+    border: none;
+    min-height: 40px;
+    word-wrap: inline;
+    width: 20%;
+    background-color: #df5f2d;
+    color: white;
+  } 
+
+  .message{
+width: 100%;
+padding: 8px;
+border-radius: 25px;
+min-height: 22px;
+line-height: 22px;
+word-wrap: inline;
+width: max-content;
+min-width: 57px;
+  }
+
+  .chatinput {
+    position: absolute;
+    right: 0;
+    width: 30vw;
+    bottom: 30px;
+  }
+
+  .sent {
+    background-color: #3970d9;
+
+
+/*margin-left: 23vw;*/
+/*float: right;*/
+/*text-align: right;*/
+
+    color: white;
+  }
+
+  .recieved {
+    background-color: #7248e6;
+    color: white;
+  }
+
+  #text {
+    padding: 5px;
+    border-radius: 5pc;
+    border: none;
+    width: 70%;
+    font-size: 12pt;
+    line-height: 12pt;
+    height: 30px;
+  }
+</style>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js">
+</script>
+  <script language="javascript" type="text/javascript">
+    $(function() {
+      var conn = null;
+      function log(msg, sentByMe=false) {
+        var control = $('#log');
+        control.html(control.html() + "<div class=\"message " + (sentByMe ? "sent" : "recieved") + "\">" + msg + "</div>" + '<br/>');
+        control.scrollTop(control.scrollTop() + 1000);
+      }
+      function connect() {
+        disconnect();
+        var wsUri = (window.location.protocol=='https:'&&'wss://'||'ws://')+window.location.host + '/ws/';
+        conn = new WebSocket(wsUri);
+        log('Connecting...', false);
+        conn.onopen = function() {
+          log('Connected.', false);
+          update_ui();
+        };
+        conn.onmessage = function(e) {
+          log(e.data, false);
+        };
+        conn.onclose = function() {
+          // log('Disconnected.');
+          conn = null;
+          update_ui();
+        };
+      }
+      function disconnect() {
+        if (conn != null) {
+          // log('Disconnecting...');
+          conn.close();
+          conn = null;
+          update_ui();
+        }
+      }
+      function update_ui() {
+        var msg = '';
+        if (conn == null) {
+          $('#status').text('disconnected');
+          $('#connect').html('Connect');
+        } else {
+          $('#status').text('connected (' + conn.protocol + ')');
+          $('#connect').html('Disconnect');
+        }
+      }
+      $('#connect').click(function() {
+        if (conn == null) {
+          connect();
+        } else {
+          disconnect();
+        }
+        update_ui();
+        return false;
+      });
+      $('#send').click(function() {
+        var text = $('#text').val();
+        log(text, true);
+        conn.send(text);
+        $('#text').val('').focus();
+        return false;
+      });
+      $('#text').keyup(function(e) {
+        if (e.keyCode === 13) {
+          $('#send').click();
+          return false;
+        }
+      });
+      connect();
+    });
+</script>
+</head>
+<body>
+
+ <div class="left-pane"> 
+
+
+
+
+<div>
+  <h2>Title and date of the class</h2>
+</div>
+<br/>
+<div>
+  <h3>Top Questions</h3>
+  <ul>
+    <li>When is the exam?</li>
+  </ul>
+</div>
+<br/>
+<div>
+  <h3>Class Themes</h3>
+  <ul>
+    <li>What is abstract writing?</li>
+    <li>Why is it important?</li>
+  </ul>
+</div>
+<br/>
+<div>
+  <h3>Related Materials</h3>
+  <ul>
+    <li>Example of research paper</li>
+  </ul>
+</div>
+
+</div>
+
+
+<div>
+  <!-- <button id="connect">Connect</button>&nbsp;|&nbsp;Status: -->
+  <!-- <span id="status">disconnected</span> -->
+</div>
+<div id="log"
+     class="chatbar">
+</div>
+<br/>
+<form id="chatform" class="chatinput" onsubmit="return false;">
+
+  <input id="text" type="text" />
+  <input id="send" type="button" value="Send" />
+</form>
+
+<div class="chatbar-background"></div>
+
+</body>
+</html>
