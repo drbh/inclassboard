@@ -41,6 +41,13 @@ println!("{:?}", value);
     )
 }
 
+fn crop_letters(s: &str, pos: usize) -> &str {
+    match s.char_indices().skip(pos).next() {
+        Some((pos, _)) => &s[pos..],
+        None => "",
+    }
+}
+
 struct WsChatSession {
     /// unique session id
     id: usize,
@@ -182,8 +189,27 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                             }
                         }
                         "//update" => {
-                            ctx.text("//text  
-# hey ");
+
+// println!("{:?}", "need to make update");
+
+let mut mstr = m.to_string();
+// let mstr = "//text #yerp".to_string();
+// println!("{:?}", mstr);
+
+let markdown_to_send = "//text ".to_string() + &crop_letters(&mut mstr , 8).to_string();
+
+println!("{:?}", markdown_to_send);
+
+ctx.text(markdown_to_send.clone());
+
+
+                    self.addr.do_send(server::ClientMessage {
+                        id: self.id,
+                        msg: markdown_to_send.clone().to_string(),
+                        room: self.room.clone(),
+                    });
+
+
                             // println!("{:?}", v);
                             // if v.len() == 2 {
                             //     ctx.text("//text # hey ");

@@ -2,6 +2,11 @@
 <meta charset="utf-8" />
 <html>
 <head>
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/editor/0.1.0/editor.css">
+<script src="//cdn.jsdelivr.net/editor/0.1.0/editor.js"></script>
+<script src="//cdn.jsdelivr.net/editor/0.1.0/marked.js"></script>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.js" integrity="sha256-44/UcMYgn8vlo2B5ydHmUcy9SXMt7bg2RhftDR35kY8=" crossorigin="anonymous"></script>
   <link href="https://fonts.googleapis.com/css?family=Rubik&display=swap" rel="stylesheet"> 
   <style>
@@ -32,8 +37,8 @@
     overflow: hidden;
     font-family: 'Rubik', sans-serif;
 
-    background-color: #353535;
-    color: white;
+    /*background-color: #353535;*/
+    /*color: white;*/
   }
 
   .left-pane{
@@ -97,6 +102,10 @@ min-width: 57px;
     line-height: 12pt;
     height: 30px;
   }
+
+  #get-info-editor{
+    height: 100px;
+  }
 </style>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js">
 </script>
@@ -125,14 +134,28 @@ function getUrlParameter(name) {
           log('Connected.', false);
           update_ui();
         };
+
+        var is_edit_mode = true
         conn.onmessage = function(e) {
 
           if (e.data.substring(0,6)==="//text"){
             // log("SHOULD UPDATE TEXT ON LEFT", false);
-            let mkd = e.data
+            let mkd = e.data.substring(8, e.data.length)
+
+            console.log(mkd)
             var converter = new showdown.Converter()
             html      = converter.makeHtml(mkd);
+
             $("#info").html(html)
+
+            if (is_edit_mode) {
+              is_edit_mode = false
+            } else {
+              // editor.codemirror.setValue(mkd)
+              is_edit_mode = true
+            }
+            
+
 
           }else{
             log(e.data, false);
@@ -197,6 +220,25 @@ function getUrlParameter(name) {
     text      = '# hello, markdown!',
     html      = converter.makeHtml(text);
     $("#info").html(html)
+    $("#get-info-editor").val(html)
+
+    var editor = new Editor();
+    editor.render();
+    editor.codemirror.setValue(text)
+
+    console.log(editor)
+
+let lastValue = text
+editor.codemirror.on("change", (event, data) =>{
+  let ta = editor.codemirror.getValue()
+
+  if (ta !== lastValue){
+    conn.send("//update " + ta );
+  }
+
+  
+
+})
 
     });
 </script>
@@ -204,13 +246,8 @@ function getUrlParameter(name) {
 <body>
 
  <div class="left-pane"> 
-
-<input id="get-info" type="button" value="update" />
-
-
-<div id="info">
-
-</div>
+<div id="info"></div>
+<textarea></textarea>
 
 </div>
 
