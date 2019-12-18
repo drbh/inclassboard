@@ -100,6 +100,14 @@ min-width: 57px;
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js">
 </script>
   <script language="javascript" type="text/javascript">
+
+function getUrlParameter(name) {
+    name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+    var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    var results = regex.exec(location.search);
+    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+};
+
     $(function() {
       var conn = null;
       function log(msg, sentByMe=false) {
@@ -109,7 +117,7 @@ min-width: 57px;
       }
       function connect() {
         disconnect();
-        var wsUri = (window.location.protocol=='https:'&&'wss://'||'ws://')+window.location.host + '/ws/';
+        var wsUri = (window.location.protocol=='https:'&&'wss://'||'ws://')+window.location.host + '/ws?room='+getUrlParameter('room'); ;
         conn = new WebSocket(wsUri);
         log('Connecting...', false);
         conn.onopen = function() {

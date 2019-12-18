@@ -17,6 +17,7 @@ pub struct Message(pub String);
 #[derive(Message)]
 #[rtype(usize)]
 pub struct Connect {
+    pub room: String,
     pub addr: Recipient<Message>,
 }
 
@@ -108,16 +109,22 @@ impl Handler<Connect> for ChatServer {
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
         println!("Someone joined");
+        println!("{:#?}", msg.room);
+        let name = msg.room.clone();
+        if self.rooms.get_mut(&name).is_none() {
+            println!("New room - adding now");
+            self.rooms.insert(name.clone(), HashSet::new());
+        }
 
         // notify all users in same room
-        self.send_message(&"Main".to_owned(), "Someone joined", 0);
+        self.send_message(&msg.room.to_owned(), "Someone joined", 0);
 
         // register session with random id
         let id = self.rng.gen::<usize>();
         self.sessions.insert(id, msg.addr);
 
         // auto join session to Main room
-        self.rooms.get_mut(&"Main".to_owned()).unwrap().insert(id);
+        self.rooms.get_mut(&msg.room.to_owned()).unwrap().insert(id);
 
         // send id back
         id

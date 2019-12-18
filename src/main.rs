@@ -18,11 +18,17 @@ async fn chat_route(
     stream: web::Payload,
     srv: web::Data<Addr<server::ChatServer>>,
 ) -> Result<HttpResponse, Error> {
+
+let value: String = req.query_string().split('=').next_back()
+    .unwrap_or("").to_string();
+
+
+println!("{:?}", value);
     ws::start(
         WsChatSession {
             id: 0,
             hb: Instant::now(),
-            room: "Main".to_owned(),
+            room: value.to_owned(),
             name: None,
             addr: srv.get_ref().clone(),
         },
@@ -62,6 +68,7 @@ impl Actor for WsChatSession {
         let addr = ctx.address();
         self.addr
             .send(server::Connect {
+                room: self.room.to_string(),
                 addr: addr.recipient(),
             })
             .into_actor(self)
@@ -237,7 +244,7 @@ async fn main() -> std::io::Result<()> {
                     .finish()
             })))
             // websocket
-            .service(web::resource("/ws/").to(chat_route))
+            .service(web::resource("/ws").to(chat_route))
             // static resources
             .service(fs::Files::new("/static/", "static/"))
     })
