@@ -68,8 +68,8 @@ pub struct ChatServer {
 impl Default for ChatServer {
     fn default() -> ChatServer {
         // default room
-        let mut rooms = HashMap::new();
-        rooms.insert("Main".to_owned(), HashSet::new());
+        let rooms = HashMap::new();
+        // rooms.insert("Main".to_owned(), HashSet::new());
 
         ChatServer {
             sessions: HashMap::new(),
@@ -111,8 +111,10 @@ impl Handler<Connect> for ChatServer {
         println!("Someone joined");
         println!("{:#?}", msg.room);
         let name = msg.room.clone();
+        let mut did_create_room = false;
         if self.rooms.get_mut(&name).is_none() {
-            println!("New room - adding now");
+            // println!("New room - adding now");
+            did_create_room = true;
             self.rooms.insert(name.clone(), HashSet::new());
         }
 
@@ -125,6 +127,10 @@ impl Handler<Connect> for ChatServer {
 
         // auto join session to Main room
         self.rooms.get_mut(&msg.room.to_owned()).unwrap().insert(id);
+
+        if did_create_room {
+            println!("{} is created by {}", &name.clone(), id);
+        }
 
         // send id back
         id
@@ -161,6 +167,7 @@ impl Handler<ClientMessage> for ChatServer {
     type Result = ();
 
     fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) {
+        println!("{:?}", msg.id);
         self.send_message(&msg.room, msg.msg.as_str(), msg.id);
     }
 }

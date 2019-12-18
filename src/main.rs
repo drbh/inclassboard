@@ -5,6 +5,9 @@ use actix_files as fs;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 
+use serde_derive::{Deserialize, Serialize};
+
+
 mod server;
 
 /// How often heartbeat pings are sent
@@ -29,6 +32,7 @@ println!("{:?}", value);
             id: 0,
             hb: Instant::now(),
             room: value.to_owned(),
+            isChatOwner: None,
             name: None,
             addr: srv.get_ref().clone(),
         },
@@ -47,6 +51,8 @@ struct WsChatSession {
     room: String,
     /// peer name
     name: Option<String>,
+    /// peer name
+    isChatOwner: Option<bool>,
     /// Chat server
     addr: Addr<server::ChatServer>,
 }
@@ -74,7 +80,10 @@ impl Actor for WsChatSession {
             .into_actor(self)
             .then(|res, act, ctx| {
                 match res {
-                    Ok(res) => act.id = res,
+                    Ok(res) => {
+                        // act.isChatOwner = res.0;
+                        act.id = res
+                    },
                     // something is wrong with chat server
                     _ => ctx.stop(),
                 }
@@ -172,6 +181,16 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                 ctx.text("!!! name is required");
                             }
                         }
+                        "//update" => {
+                            ctx.text("//text  
+# hey ");
+                            // println!("{:?}", v);
+                            // if v.len() == 2 {
+                            //     ctx.text("//text # hey ");
+                            // } else {
+                            //     ctx.text("could not update");
+                            // }
+                        }
                         _ => ctx.text(format!("!!! unknown command: {:?}", m)),
                     }
                 } else {
@@ -226,6 +245,20 @@ impl WsChatSession {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct MyObj {
+    name: String,
+    number: i32,
+}
+
+/// This handler uses json extractor
+async fn update_handler(item: web::Json<MyObj>) -> HttpResponse {
+    println!("model: {:?}", &item);
+    HttpResponse::Ok().json(item.0) // <- send response
+}
+
+
+
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init();
@@ -243,6 +276,7 @@ async fn main() -> std::io::Result<()> {
                     .header("LOCATION", "/static/websocket.html")
                     .finish()
             })))
+            .service(web::resource("/update").route(web::post().to(update_handler)))
             // websocket
             .service(web::resource("/ws").to(chat_route))
             // static resources

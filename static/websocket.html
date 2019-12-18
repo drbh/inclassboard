@@ -2,6 +2,7 @@
 <meta charset="utf-8" />
 <html>
 <head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.js" integrity="sha256-44/UcMYgn8vlo2B5ydHmUcy9SXMt7bg2RhftDR35kY8=" crossorigin="anonymous"></script>
   <link href="https://fonts.googleapis.com/css?family=Rubik&display=swap" rel="stylesheet"> 
   <style>
   .chatbar {
@@ -125,7 +126,18 @@ function getUrlParameter(name) {
           update_ui();
         };
         conn.onmessage = function(e) {
-          log(e.data, false);
+
+          if (e.data.substring(0,6)==="//text"){
+            // log("SHOULD UPDATE TEXT ON LEFT", false);
+            let mkd = e.data
+            var converter = new showdown.Converter()
+            html      = converter.makeHtml(mkd);
+            $("#info").html(html)
+
+          }else{
+            log(e.data, false);
+          }
+          
         };
         conn.onclose = function() {
           // log('Disconnected.');
@@ -166,7 +178,13 @@ function getUrlParameter(name) {
         conn.send(text);
         $('#text').val('').focus();
         return false;
+      });      
+
+      $('#get-info').click(function() {
+        conn.send("//update");
+        return false;
       });
+
       $('#text').keyup(function(e) {
         if (e.keyCode === 13) {
           $('#send').click();
@@ -174,6 +192,12 @@ function getUrlParameter(name) {
         }
       });
       connect();
+
+    var converter = new showdown.Converter(),
+    text      = '# hello, markdown!',
+    html      = converter.makeHtml(text);
+    $("#info").html(html)
+
     });
 </script>
 </head>
@@ -181,33 +205,11 @@ function getUrlParameter(name) {
 
  <div class="left-pane"> 
 
+<input id="get-info" type="button" value="update" />
 
 
+<div id="info">
 
-<div>
-  <h2>Title and date of the class</h2>
-</div>
-<br/>
-<div>
-  <h3>Top Questions</h3>
-  <ul>
-    <li>When is the exam?</li>
-  </ul>
-</div>
-<br/>
-<div>
-  <h3>Class Themes</h3>
-  <ul>
-    <li>What is abstract writing?</li>
-    <li>Why is it important?</li>
-  </ul>
-</div>
-<br/>
-<div>
-  <h3>Related Materials</h3>
-  <ul>
-    <li>Example of research paper</li>
-  </ul>
 </div>
 
 </div>
@@ -225,6 +227,7 @@ function getUrlParameter(name) {
 
   <input id="text" type="text" />
   <input id="send" type="button" value="Send" />
+  
 </form>
 
 <div class="chatbar-background"></div>
